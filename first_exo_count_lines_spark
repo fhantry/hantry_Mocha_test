@@ -1,10 +1,14 @@
+/**
+  * Created by hantry on 12/05/2016.
+  */
+
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.SparkContext._
 
 object count {
   def main(args : Array[String]) =
   {
-    val conf = new SparkConf().setAppName("wordCount").setMaster("local[4]")
+    val conf = new SparkConf().setAppName("lineCount").setMaster("local[4]")
     val sc = new SparkContext(conf)
     val test = sc.textFile("C:/Users/hantry/Desktop/cours big data/data_test/bookings.csv",4)
     val test_2 = sc.textFile("C:/Users/hantry/Desktop/cours big data/data_test/searches.csv",4)
