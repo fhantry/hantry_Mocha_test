@@ -1,0 +1,32 @@
+/**
+  * Created by fhantry on 18/05/2016.
+  */
+
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.SQLContext
+
+
+object top {
+
+    def main(args : Array[String]) = {
+      val conf = new SparkConf().setAppName("top_10").setMaster("local")
+      val sc = new SparkContext(conf)
+      val sqlContext = new SQLContext(sc)
+      import sqlContext.implicits._
+      val csvParser =
+        sqlContext.
+          read.
+          format("com.databricks.spark.csv").
+          option("header","true").
+          option("delimiter","^").
+          option("mode","DROPMALFORMED").
+          option("inferSchema","true")
+
+      val df =
+        csvParser.load("D:/Userfiles/fhantry/Desktop/bookings.csv")
+      df.printSchema()
+      val agg =  df.sqlContext.sql("SELECT arr_port , SUM(pax) AS su FROM airport_15 GROUP BY arr_port ORDER BY su DESC LIMIT 10 ")
+    agg.show(10)}
+
+
+}
