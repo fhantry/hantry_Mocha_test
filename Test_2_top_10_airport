@@ -25,6 +25,7 @@ object top {
       val df =
         csvParser.load("D:/Userfiles/fhantry/Desktop/bookings.csv")
       df.printSchema()
+      df.registerTempTable("airport_15")
       val agg =  df.sqlContext.sql("SELECT arr_port , SUM(pax) AS su FROM airport_15 GROUP BY arr_port ORDER BY su DESC LIMIT 10 ")
     agg.show(10)}
 
