@@ -1,0 +1,49 @@
+/**
+  * Created by fhantry on 18/05/2016.
+  */
+
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.functions
+import breeze.linalg._
+import breeze.plot._
+
+// I will use breeze package for plots, the end of exercice 3 will be delivered friday morning
+object plot_monthly_searches {
+  def main(args : Array[String]) = {
+    val conf = new SparkConf().setAppName("top_10").setMaster("local")
+    val sc = new SparkContext(conf)
+    val sqlContext = new SQLContext(sc)
+    import sqlContext.implicits._
+    val csvParser =
+      sqlContext.
+        read.
+        format("com.databricks.spark.csv").
+        option("header", "true"). //headers at the first line
+        option("delimiter", "^"). // ^ delimits the columns
+        option("mode", "DROPMALFORMED"). // I had some problems with some rows with wrong number of delimiters so I dropped the bad rows
+        option("inferSchema", "true") // Even it is a little bit time elapsing, at least get easily the right type, particularly the integertype, for aggregating on pax column
+
+   
+    val df2 =
+      csvParser.load("D:/Userfiles/fhantry/Desktop/searches.csv")
+    //pushing deepest the selection constraint
+    val df3 = df2.select("Date","Destination").where(df2("Destination").isin("AGP","BCN","MAD"))
+    val df4 = df3.withColumn("yearmonth",org.apache.spark.sql.functions.month(df3("Date"))) // I simplify by ordinal since there is only one year 2013
+    val df_monthly_searches = df4.groupBy("yearmonth","Destination").count()
+
+    df_monthly_searches.cache()
+    df_monthly_searches.registerTempTable("monthly")
+    val Malaga_Monthly =  df_monthly_searches.sqlContext.sql("SELECT yearmonth , count  FROM monthly WHERE Destination = 'AGP' ")
+    println("Malaga Monthly")
+    Malaga_Monthly.show()
+    val Madrid_Monthly =  df_monthly_searches.sqlContext.sql("SELECT yearmonth , count  FROM monthly WHERE Destination = 'MAD' ")
+    println("Madrid Monthly")
+    Madrid_Monthly.show()
+    val Barcelona_Monthly =  df_monthly_searches.sqlContext.sql("SELECT yearmonth , count  FROM monthly WHERE Destination = 'BCN' ")
+    Barcelona_Monthly.show()
+
+
+    // we will now create dense vectors by iterating on rows of the dataframes  Malaga_Monthly... and then plot them thanks to breez.plot
+  }
+}
