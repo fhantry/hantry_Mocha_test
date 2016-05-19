@@ -1,33 +1,42 @@
-/**
-  * Created by fhantry on 18/05/2016.
-  */
-
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.sql.SQLContext
+  import org.apache.spark.sql.SQLContext
+  import org.apache.spark.sql.functions
 
 
-object top {
+  object top {
 
-    def main(args : Array[String]) = {
-      val conf = new SparkConf().setAppName("top_10").setMaster("local")
-      val sc = new SparkContext(conf)
-      val sqlContext = new SQLContext(sc)
-      import sqlContext.implicits._
-      val csvParser =
-        sqlContext.
-          read.
-          format("com.databricks.spark.csv").
-          option("header","true").
-          option("delimiter","^").
-          option("mode","DROPMALFORMED").
-          option("inferSchema","true")
+      def main(args : Array[String]) = {
+        val conf = new SparkConf().setAppName("top_10").setMaster("local")
+        val sc = new SparkContext(conf)
+        val sqlContext = new SQLContext(sc)
+        import sqlContext.implicits._
+        val csvParser =
+          sqlContext.
+            read.
+            format("com.databricks.spark.csv").
+            option("header","true"). //headers at the first line
+            option("delimiter","^"). // ^ delimits the columns
+            option("mode","DROPMALFORMED"). // I had some problems with some rows with wrong number of delimiters so I dropped the bad rows
+            option("inferSchema","true") // Even it is a little bit time elapsing, at least get easily the right type, particularly the integertype, for aggregating on pax column
 
-      val df =
-        csvParser.load("D:/Userfiles/fhantry/Desktop/bookings.csv")
-      df.printSchema()
-      df.registerTempTable("airport_15")
-      val agg =  df.sqlContext.sql("SELECT arr_port , SUM(pax) AS su FROM airport_15 GROUP BY arr_port ORDER BY su DESC LIMIT 10 ")
-    agg.show(10)}
-
-
-}
+        val df =
+          csvParser.load("D:/Userfiles/fhantry/Desktop/bookings.csv")
+        //df.printSchema()
+        df.registerTempTable("airport")
+        // I will use the sql/spark encoding and particularly the order by Limit enabling not sorting the whole aggregation
+        val agg =  df.sqlContext.sql("SELECT arr_port , SUM(pax) AS su FROM airport GROUP BY arr_port ORDER BY su DESC LIMIT 10 ")
+        agg.cache() // caching for the next join on it
+        agg.show() // showing the top 10 airport
+        val agg_no_space = agg.withColumn("arr_port",functions.rtrim(agg("arr_port"))) // killing right spaces on arr_port before doing the join with geobase,
+       // loading geobase without header
+        val geobase  =  sqlContext.
+            read.
+            format("com.databricks.spark.csv").
+            option("delimiter","^").
+            option("inferSchema","true").
+            load("D:/Userfiles/fhantry/Desktop/geobase.csv")
+       //printing the top 10 airport with their name
+       val jointure = agg_no_space.join(geobase).where(agg_no_space("arr_port") === geobase("C0"))
+        // printing the corresponding city/Airport name
+       jointure.select("arr_port","su","C1").orderBy(functions.desc("su")).show()
+      }
