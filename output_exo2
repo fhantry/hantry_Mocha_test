@@ -1,0 +1,32 @@
+top_10_airport
+
++--------+-----+
+|arr_port|   su|
++--------+-----+
+|LHR     |88809|
+|MCO     |70930|
+|LAX     |70530|
+|LAS     |69630|
+|JFK     |66270|
+|CDG     |64490|
+|BKK     |59460|
+|MIA     |58150|
+|SFO     |58000|
+|DXB     |55590|
++--------+-----+
+
+
+top_10_airport_and_name
+|arr_port|   su|                  C1|
++--------+-----+--------------------+
+|     LHR|88809|London Heathrow A...|
+|     MCO|70930|Orlando Internati...|
+|     LAX|70530|Los Angeles Inter...|
+|     LAS|69630|McCarran Internat...|
+|     JFK|66270|John F Kennedy In...|
+|     CDG|64490|Paris - Charles-d...|
+|     BKK|59460|        Suvarnabhumi|
+|     MIA|58150|Miami Internation...|
+|     SFO|58000|San Francisco Int...|
+|     DXB|55590|Dubai Internation...|
++--------+-----+--------------------+
